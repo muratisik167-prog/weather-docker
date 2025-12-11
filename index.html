@@ -3,123 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Şehir Seçme Çekmecesi</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-
-        /* Çekmeceyi Açma Butonu */
-        .open-btn {
-            font-size: 20px;
-            cursor: pointer;
-            background-color: #111;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-        }
-
-        .open-btn:hover {
-            background-color: #444;
-        }
-
-        /* --- ÇEKMECE (DRAWER) STİLLERİ --- */
-        .sidenav {
-            height: 100%;
-            width: 0; /* Başlangıçta kapalı */
-            position: fixed;
-            z-index: 1;
-            top: 0;
-            left: 0;
-            background-color: #111; /* Siyah arka plan */
-            overflow-x: hidden;
-            transition: 0.5s; /* 0.5 saniyede kayarak açılma efekti */
-            padding-top: 60px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.5);
-        }
-
-        /* Çekmece içindeki linkler (Şehirler) */
-        .sidenav a {
-            padding: 8px 8px 8px 32px;
-            text-decoration: none;
-            font-size: 22px;
-            color: #818181;
-            display: block;
-            transition: 0.3s;
-            cursor: pointer;
-            border-bottom: 1px solid #333;
-        }
-
-        .sidenav a:hover {
-            color: #f1f1f1;
-            background-color: #333;
-        }
-
-        /* Kapatma (X) butonu */
-        .sidenav .closebtn {
-            position: absolute;
-            top: 0;
-            right: 25px;
-            font-size: 36px;
-            margin-left: 50px;
-            border-bottom: none;
-        }
-
-        /* Seçilen şehir göstergesi */
-        .sonuc-kutusu {
-            margin-top: 20px;
-            font-size: 24px;
-            color: #333;
-            font-weight: bold;
-        }
-    </style>
+    <title>Sinematik Hava Durumu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <h1>hava durumu</h1>
-    <h2>Şehir Seçimi</h2>
-    <p>Yan menüyü açmak için butona bas.</p>
-    
-    <button class="open-btn" onclick="openNav()">☰ Şehir Seç</button>
+<body class="default-bg">
 
-    <div class="sonuc-kutusu" id="sonuc">
-        Henüz seçim yapılmadı.
-    </div>
+    <div class="app-container">
+        
+        <div class="search-bar">
+            <input type="text" id="searchBox" placeholder="Şehir veya kasaba arayın...">
+            <button id="searchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
 
-    <div id="mySidenav" class="sidenav">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-        <a onclick="sehirSec('İstanbul')">İstanbul</a>
-        <a onclick="sehirSec('Ankara')">Ankara</a>
-        <a onclick="sehirSec('İzmir')">İzmir</a>
-        <a onclick="sehirSec('Antalya')">Antalya</a>
-        <a onclick="sehirSec('Bursa')">Bursa</a>
-        <a onclick="sehirSec('Sakarya')">Sakarya</a>
-    </div>
+        <div class="error-msg" style="display: none;">Konum bulunamadı, tekrar deneyin.</div>
 
-    <script>
-        // Çekmeceyi AÇMA fonksiyonu
-        function openNav() {
-            document.getElementById("mySidenav").style.width = "250px";
-        }
+        <div class="weather-card" style="display: none;">
+            <div class="location-date">
+                <h1 id="city">Şehir Yükleniyor...</h1>
+                <p id="date">Tarih bilgisi</p>
+            </div>
 
-        // Çekmeceyi KAPATMA fonksiyonu
-        function closeNav() {
-            document.getElementById("mySidenav").style.width = "0";
-        }
+            <div class="weather-main">
+                <div class="temp-container">
+                    <span id="temperature">0</span>
+                    <span class="celsius">°C</span>
+                </div>
+                <div class="weather-icon-container">
+                     <img id="weatherIconImg" src="" alt="">
+                     <p id="weatherCondition">Durum</p>
+                </div>
+            </div>
 
-        // Şehir seçildiğinde çalışacak fonksiyon
-        function sehirSec(sehirIsmi) {
-            // Ekrana yaz
-            document.getElementById("sonuc").innerHTML = "Seçilen Şehir: " + sehirIsmi;
-            document.getElementById("sonuc").style.color = "green";
-            
-            // Seçimden sonra çekmeceyi kapat
-            closeNav();
-        }
-    </script>
-
+            <div class="weather-details">
+                <div class="detail-item">
+                    <i class="fa-solid fa-droplet"></i>
+                    <div>
+                        <span id="humidity">0%</span>
+                        <p>Nem</p>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <i class="fa-solid fa-wind"></i>
+                    <div>
+                        <span id="windSpeed">0 km/s</span>
+                        <p>Rüzgar</p>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <i class="fa-solid fa-cloud"></i>
+                    <div>
+                        <span id="cloudiness">0%</span>
+                        <p>Bulut</p>
+                    </div>
+                </div>
+            </div>
+        </div> </div> <script src="script.js"></script>
 </body>
 </html>
