@@ -1,83 +1,94 @@
-/* --- ÇEKMECE (DRAWER) KONTROL FONKSİYONLARI --- */
+// --- API ANAHTARINI BURAYA GİR (OpenWeatherMap) ---
+const API_KEY = 'SENIN_API_ANAHTARIN'; 
 
-// Çekmeceyi açar (Genişliği 250px yapar)
-function openNav() {
-    document.getElementById("mySidenav").style.width = "250px";
-}
+const searchBox = document.querySelector('#searchBox');
+const searchBtn = document.querySelector('#searchBtn');
+const errorMsg = document.querySelector('.error-msg');
+const weatherCard = document.querySelector('.weather-card');
 
-// Çekmeceyi kapatır (Genişliği 0 yapar)
-function closeNav() {
-    document.getElementById("mySidenav").style.width = "0";
-}
+// Olay Dinleyicileri
+searchBtn.addEventListener('click', () => checkWeather(searchBox.value));
+searchBox.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') checkWeather(searchBox.value);
+});
 
-// Çekmeceden şehir seçilince çalışan fonksiyon
-function selectCity(cityName) {
-    // 1. Input kutusunu seçilen şehirle doldur (görsellik için)
-    const cityInput = document.getElementById("city");
-    if (cityInput) {
-        cityInput.value = cityName;
-    }
+async function checkWeather(city) {
+    if(!city) return;
 
-    // 2. Çekmeceyi kapat
-    closeNav();
-
-    // 3. Hava durumu fonksiyonunu bu şehirle başlat
-    getWeather(cityName);
-}
-
-/* --- HAVA DURUMU API FONKSİYONU --- */
-
-async function getWeather(manuelSehirIsmi = null) {
-    const resultDiv = document.getElementById("result");
-    let cityName;
-
-    // Eğer fonksiyona parametre geldiyse (Çekmeceden tıklandıysa) onu kullan
-    if (manuelSehirIsmi && typeof manuelSehirIsmi === 'string') {
-        cityName = manuelSehirIsmi;
-    } else {
-        // Parametre yoksa input kutusuna bak (Butona tıklandıysa)
-        cityName = document.getElementById("city").value;
-    }
-
-    // Şehir adı boşsa uyarı ver
-    if (!cityName) {
-        resultDiv.textContent = "Lütfen bir şehir seçin veya yazın.";
-        return;
-    }
-
-    resultDiv.textContent = "Veriler çekiliyor, lütfen bekleyin...";
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&lang=tr&appid=${API_KEY}`;
 
     try {
-        // 1) Geocoding API (Şehir isminden koordinat bulma)
-        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${cityName}`);
-        const geoData = await geoRes.json();
+        const response = await fetch(url);
 
-        if (!geoData.results) {
-            resultDiv.textContent = "Şehir bulunamadı. Lütfen isimi kontrol edin.";
-            return;
+        if (response.status === 404) {
+            errorMsg.style.display = 'block';
+            weatherCard.style.display = 'none';
+            // Hata durumunda arka planı varsayılana döndür
+            document.body.className = 'default-bg';
+        } else {
+            const data = await response.json();
+            errorMsg.style.display = 'none';
+            weatherCard.style.display = 'block';
+
+            // Verileri HTML'e yerleştir
+            document.querySelector('#city').innerHTML = `${data.name}, ${data.sys.country}`;
+            // Tarihi formatla (Örn: 12 Aralık 2023, Salı)
+            const date = new Date();
+            document.querySelector('#date').innerHTML = date.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            document.querySelector('#temperature').innerHTML = Math.round(data.main.temp);
+            document.querySelector('#weatherCondition').innerHTML = data.weather[0].description;
+            document.querySelector('#humidity').innerHTML = data.main.humidity + '%';
+            document.querySelector('#windSpeed').innerHTML = Math.round(data.wind.speed) + ' km/s';
+            document.querySelector('#cloudiness').innerHTML = data.clouds.all + '%';
+
+            // İkonu API'den çek (daha kaliteli ikonlar için yerel dosyalar kullanılabilir)
+            const iconCode = data.weather[0].icon;
+            document.querySelector('#weatherIconImg').src = `https://openweathermap.org/img/wn/${iconCode}@4x.png`;
+
+            // --- KRİTİK NOKTA: ARKA PLANI GÜNCELLE ---
+            updateBackground(data.weather[0].main, iconCode);
         }
-
-        const { latitude, longitude, name, country } = geoData.results[0];
-
-        // 2) Weather API (Koordinattan hava durumu bulma)
-        const weatherRes = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
-        );
-        const weatherData = await weatherRes.json();
-
-        // Sonucu ekrana basma (Okunabilir formatta)
-        const output = {
-            Durum: "Başarılı",
-            Konum: `${name}, ${country}`,
-            Sicaklik: `${weatherData.current_weather.temperature} °C`,
-            Ruzgar: `${weatherData.current_weather.windspeed} km/h`,
-            API_Detaylari: weatherData // Orijinal detaylı veri
-        };
-
-        resultDiv.textContent = JSON.stringify(output, null, 2);
 
     } catch (error) {
         console.error("Hata:", error);
-        resultDiv.textContent = "Bir hata oluştu. İnternet bağlantınızı kontrol edin.";
+        errorMsg.style.display = 'block';
+        errorMsg.innerHTML = "Bağlantı hatası oluştu.";
+    }
+}
+
+// Hava durumuna ve gece/gündüz durumuna göre arka plan sınıfını değiştirir
+function updateBackground(weatherMain, iconCode) {
+    const body = document.body;
+    // İkon kodunun son harfi 'n' ise gecedir, 'd' ise gündüzdür.
+    const isNight = iconCode.includes('n');
+
+    // Önce tüm sınıfları temizle
+    body.className = '';
+
+    switch (weatherMain.toLowerCase()) {
+        case 'clear':
+            body.classList.add(isNight ? 'clear-night' : 'clear-day');
+            break;
+        case 'clouds':
+            body.classList.add('clouds');
+            break;
+        case 'rain':
+        case 'drizzle':
+        case 'thunderstorm':
+            body.classList.add('rain'); // Yağmurlu görseli tetiklenir
+            break;
+        case 'snow':
+            body.classList.add('snow');
+            break;
+        case 'mist':
+        case 'smoke':
+        case 'haze':
+        case 'fog':
+            body.classList.add('atmosphere');
+            break;
+        default:
+            body.classList.add('default-bg');
+            break;
     }
 }
